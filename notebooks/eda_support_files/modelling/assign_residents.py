@@ -110,13 +110,16 @@ def assign_residents_to_parking_lots(gdf_resident_gem, gdf_parking_lots_gem_opt,
     else:
         raise ValueError("Invalid mode. Choose 'random' or 'min_cost_flow'.")
 
+    # Count residents per parking lot and merge back
+    lot_counts = gdf_resident_gem.groupby("assigned_parking_lot").size().reset_index(name="assigned_resident_count")
+    gdf_resident_gem = gdf_resident_gem.merge(lot_counts, on="assigned_parking_lot", how="left")
+
     # Back to CRS 4326 and save
     gdf_resident_gem = gdf_resident_gem.to_crs(4326)
     gdf_resident_gem = gdf_resident_gem.astype({
         "gemeentenaam": "string",
         "assigned_parking_lot": "int32",
-        "distance_to_parking": "int32"
+        "distance_to_parking": "int32",
+        "assigned_resident_count": "int32"
     })
     gdf_resident_gem.to_file(output_file, driver="GeoJSON")
-
-    return gdf_resident_gem, distances
